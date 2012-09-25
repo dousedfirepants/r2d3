@@ -57,6 +57,7 @@ function appendRaphael(parent) {
   // Fool sizzle into thinking the paper is an element
   paper.nodeType = 1;
   paper.nodeName = 'object';
+  paper.node = parent;
 
   return paper;
 }
@@ -103,24 +104,30 @@ Raphael.fn.getElementsByClassName = function(selector) {
 
 
 Raphael.fn.getElementsByTagName = function(tag) {
-  var matches = [];
-  this.forEach(function(el) {
-    var type = el.data('lineAttrs') ? 'line' : el.type;
-    if (type === tag) matches.push(el);
-  });
-  return matches;
+  // Tagnames differ in VML and SVG, search by custom data attribute instead
+  var matches = this.node.getElementsByTagName('[data-r2d3-tagName=' + tag + ']'),
+      els = [];
+
+  for (var i=0; i< matches.length; i++) {
+    var el = matches[i];
+    if (el.raphael && el.raphaelid) {
+      els.push(this.getById(el));
+    }
+  }
+  return els;
 };
 
 
 Raphael.fn.appendChild = function(childNode) {
   var type = childNode && childNode.nodeName,
-      node =  type ? this[type.toLowerCase()]() : null;
+      el =  type ? this[type.toLowerCase()]() : null;
 
   // Ensure Paper can be referenced from sets
-  if (node) {
-    node.paper = this;
+  if (el) {
+    el.paper = this;
+    el.node.setAttribute('data-r2d3-tagName', type);
   }
-  return node;
+  return el;
 };
 
 
